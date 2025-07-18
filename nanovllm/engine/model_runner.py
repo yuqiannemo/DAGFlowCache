@@ -1,4 +1,5 @@
 import pickle
+import socket
 import torch
 import torch.distributed as dist
 from multiprocessing.synchronize import Event
@@ -7,6 +8,7 @@ from multiprocessing.shared_memory import SharedMemory
 from nanovllm.config import Config
 from nanovllm.engine.sequence import Sequence
 from nanovllm.models.qwen3 import Qwen3ForCausalLM
+from nanovllm.models.llama import LlamaForCausalLM
 from nanovllm.layers.sampler import Sampler
 from nanovllm.utils.context import set_context, get_context, reset_context
 from nanovllm.utils.loader import load_model
@@ -23,12 +25,30 @@ class ModelRunner:
         self.rank = rank
         self.event = event
 
-        dist.init_process_group("nccl", "tcp://localhost:2333", world_size=self.world_size, rank=rank)
+        # dist.init_process_group("nccl", "tcp://localhost:2333", world_size=self.world_size, rank=rank)
+        def find_free_port():
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('', 0))
+                return s.getsockname()[1]
+
+        port = find_free_port() if rank == 0 else 2333
+        dist.init_process_group(
+            "nccl",
+            f"tcp://localhost:{port}",
+            world_size=self.world_size,
+            rank=rank
+        )
         torch.cuda.set_device(rank)
         default_dtype = torch.get_default_dtype()
         torch.set_default_dtype(hf_config.torch_dtype)
         torch.set_default_device("cuda")
-        self.model = Qwen3ForCausalLM(hf_config)
+        model_type = config.hf_config.model_type
+        if model_type in ["qwen3"]:
+            self.model = Qwen3ForCausalLM(hf_config)
+        elif model_type in ["llama", "llama2", "llama3"]:
+            self.model = LlamaForCausalLM(hf_config)
+        else:
+            raise ValueError(f"Unsupported model type: {model_type}")
         load_model(self.model, config.model)
         self.sampler = Sampler()
         self.warmup_model()
