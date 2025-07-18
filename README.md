@@ -1,58 +1,71 @@
-# Nano-vLLM
+# DAGFlowCache: Multi-Model Cascaded Inference Framework
 
-A lightweight vLLM implementation built from scratch.
+A lightweight inference framework integrating DAG input structures, KV cache sharing, and CPU offloading for efficient multi-model cascaded reasoning.
 
-## Key Features
+## Core Features
 
-* 🚀 **Fast offline inference** - Comparable inference speeds to vLLM
-* 📖 **Readable codebase** - Clean implementation in ~ 1,200 lines of Python code
-* ⚡ **Optimization Suite** - Prefix caching, Tensor Parallelism, Torch compilation, CUDA graph, etc.
-
-## Installation
-
-```bash
-pip install git+https://github.com/GeeeekExplorer/nano-vllm.git
-```
-
-## Manual Download
-
-If you prefer to download the model weights manually, use the following command:
-```bash
-huggingface-cli download --resume-download Qwen/Qwen3-0.6B \
-  --local-dir ~/huggingface/Qwen3-0.6B/ \
-  --local-dir-use-symlinks False
-```
+- **DAG Input Management**: Supports defining input dependencies via Directed Acyclic Graph (DAG) structures, flexibly handling complex inference workflows.
+- **Cascaded Model Inference**: Enables cascaded calls between dual models, where the output of the preceding model serves as input to the subsequent model for progressive reasoning.
+- **KV Cache Sharing**: Shares KV caches across multiple models to reduce redundant computations and improve inference efficiency.
+- **CPU Offloading Optimization**: Automatically offloads partial computing tasks to the CPU, balancing GPU resource usage.
 
 ## Quick Start
 
-See `example.py` for usage. The API mirrors vLLM's interface with minor differences in the `LLM.generate` method:
-```python
-from nanovllm import LLM, SamplingParams
-llm = LLM("/YOUR/MODEL/PATH", enforce_eager=True, tensor_parallel_size=1)
-sampling_params = SamplingParams(temperature=0.6, max_tokens=256)
-prompts = ["Hello, Nano-vLLM."]
-outputs = llm.generate(prompts, sampling_params)
-outputs[0]["text"]
+### Requirements
+- Python 3.8+
+- PyTorch 2.0+
+- CUDA 11.7+ (for GPU acceleration)
+
+### Installation
+```bash
+git clone https://github.com/yuqiannemo/DAGFlowCache.git
+cd DAGFlowCache
+pip install -r requirements.txt
 ```
 
-## Benchmark
+### Example Usage
+```python
+from dagflowcache import LLM, SamplingParams, DAGInput
 
-See `bench.py` for benchmark.
+# Initialize model (with shared KV cache)
+llm = LLM(
+    model_path="your-model-path",
+    share_kv_cache=True,
+    cpu_offloading=True  # Enable CPU offloading
+)
 
-**Test Configuration:**
-- Hardware: RTX 4070 Laptop (8GB)
-- Model: Qwen3-0.6B
-- Total Requests: 256 sequences
-- Input Length: Randomly sampled between 100–1024 tokens
-- Output Length: Randomly sampled between 100–1024 tokens
+# Define DAG structure input
+dag_input = DAGInput()
+dag_input.add_node("prompt1", "<|im_start|>user\nintroduce yourself<|im_end|>")
+dag_input.add_node("prompt2", "<|im_start|>user\nlist primes under 100<|im_end|>")
 
-**Performance Results:**
-| Inference Engine | Output Tokens | Time (s) | Throughput (tokens/s) |
-|----------------|-------------|----------|-----------------------|
-| vLLM           | 133,966     | 98.37    | 1361.84               |
-| Nano-vLLM      | 133,966     | 93.41    | 1434.13               |
+# Configure sampling parameters
+sampling_params = SamplingParams(temperature=0.7, max_tokens=200)
 
+# Run inference
+outputs = llm.generate(dag_input, sampling_params)
 
-## Star History
+# Print results
+for output in outputs:
+    print(f"Completion for node {output.seq_id}:\n{output.text}\n")
+```
 
-[![Star History Chart](https://api.star-history.com/svg?repos=GeeeekExplorer/nano-vllm&type=Date)](https://www.star-history.com/#GeeeekExplorer/nano-vllm&Date)
+## Project Structure
+```
+DAGFlowCache/
+├── dagflowcache/          # Core code
+│   ├── engine/            # Inference engine (model cascading/cache management)
+│   ├── layers/            # Custom layers (attention mechanisms, etc.)
+│   ├── models/            # Model definitions
+│   └── utils/             # Utility functions (DAG processing/CPU offloading)
+├── examples/              # Example scripts
+└── requirements.txt       # Dependencies list
+```
+
+## Notes
+- KV cache sharing currently supports models with the same architecture (e.g., different fine-tuned models from the same base).
+- The number of DAG input nodes is recommended to be ≤50 to avoid overly complex dependency calculations.
+- CPU offloading strategy can be adjusted via the `offload_ratio` parameter (default: 0.3, meaning 30% of tasks are offloaded to CPU).
+
+## License
+This project is open-source under the MIT License. See the LICENSE file for details.
