@@ -1,0 +1,22 @@
+dataset: dim/mt_bench_en
+start_nodes:
+  - node0
+end_nodes:
+  - node1
+nodes:
+  node0:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    max_tokens: 1024
+    max_bs: 32
+    prompt: "Please follow the instructions provided by the user query."
+    input_nodes: []
+    output_nodes:
+      - node1
+  node1:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    max_tokens: 1024
+    max_bs: 32
+    prompt: "Please follow the instructions provided by the user query."
+    input_nodes:
+      - node0
+    output_nodes: []

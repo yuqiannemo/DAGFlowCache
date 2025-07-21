@@ -1,0 +1,28 @@
+start_nodes:
+  - node0
+end_nodes:
+  - node1
+  - node2
+nodes:
+  node0:
+    model: Qwen/Qwen3-0.6B
+    prompt: "Please answer the question."
+    max_tokens: 256
+    input_nodes: []
+    output_nodes:
+      - node1
+      - node2
+  node1:
+    model: Qwen/Qwen3-0.6B
+    prompt: "Please rethink and answer the question again."
+    max_tokens: 256
+    input_nodes:
+      - node0
+    output_nodes: []
+  node2:
+    model: Qwen/Qwen3-0.6B
+    prompt: "Please rethink and answer the question again."
+    max_tokens: 256
+    input_nodes:
+      - node0
+    output_nodes: []

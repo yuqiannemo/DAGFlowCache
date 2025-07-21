@@ -1,0 +1,30 @@
+dataset: openai/gsm8k
+name: main
+column: question
+start_nodes:
+  - node0
+end_nodes:
+  - node2
+nodes:
+  node0:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please try to answer the question with Chain of Thought."
+    max_tokens: 1024
+    input_nodes: []
+    output_nodes:
+      - node1
+  node1:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please give your critique and judgement towards the answer provided previously."
+    max_tokens: 1024
+    input_nodes:
+      - node0
+    output_nodes:
+      - node2
+  node2:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please rethink and give your final answer considering the critique before."
+    max_tokens: 1024
+    input_nodes:
+      - node1
+    output_nodes: []

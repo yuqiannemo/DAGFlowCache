@@ -1,0 +1,65 @@
+# Dataset used for review-based analysis tasks
+dataset: McAuley-Lab/Amazon-Reviews-2023
+category: raw_review_All_Beauty
+category2: raw_meta_All_Beauty
+# Define entry and exit points of the node flow
+start_nodes:
+  - node0
+end_nodes:
+  - node2
+
+nodes:
+  # Step 1: Clean and segment the review into structured components
+  node0:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    max_tokens: 1024
+    prompt: |
+      You are a text analysis assistant. Please structure the following product review into the following four parts. If any part is missing, write "None":
+      1. Usage experience
+      2. Positive feedback
+      3. Negative feedback
+      4. Summary suggestion
+
+      Review:
+      {text}
+    input_nodes: []
+    output_nodes:
+      - node1
+
+  # Step 2: Extract product and user-related features from the structured text
+  node1:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    max_tokens: 1024
+    prompt: |
+      From the following structured user review, extract the following information:
+      - Product usage form (e.g., "spray", "lotion", "shampoo")
+      - Sensory descriptions (e.g., "pleasant scent", "non-greasy", "gentle")
+      - User needs or expectations (e.g., "good for thick hair", "chemical-free")
+      - Mentioned comparisons or references (e.g., "better than other brands")
+
+      Structured review:
+      {processed_text}
+    input_nodes:
+      - node0
+    output_nodes:
+      - node2
+
+  # Step 3: Generate product improvement suggestions based on user feedback
+  node2:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    max_tokens: 1024
+    prompt: |
+      You are assisting a product manager. Based on the following feedback from different users, generate 3 actionable product improvement suggestions. Focus on negative feedback or constructive suggestions.
+
+      User feedback:
+      1. {comment_1}
+      2. {comment_2}
+      3. {comment_3}
+
+      Output format:
+      - Suggestion 1
+      - Suggestion 2
+      - Suggestion 3
+    input_nodes:
+      - node1
+    output_nodes: []

@@ -1,0 +1,28 @@
+start_nodes:
+  - node0
+  - node1
+end_nodes:
+  - node2
+nodes:
+  node0:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please answer the question in elementary level."
+    max_tokens: 256
+    input_nodes: []
+    output_nodes:
+      - node2
+  node1:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please answer the question in high level."
+    max_tokens: 256
+    input_nodes: []
+    output_nodes:
+      - node2
+  node2:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please rethink and answer the question again."
+    max_tokens: 256
+    input_nodes:
+      - node0
+      - node1
+    output_nodes: []

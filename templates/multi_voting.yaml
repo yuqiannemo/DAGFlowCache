@@ -1,0 +1,40 @@
+dataset: gopalkalpande/bbc-news-summary
+name: default
+column: Articles
+start_nodes:
+  - node0
+  - node1
+  - node2
+end_nodes:
+  - node3
+nodes:
+  node0:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    max_tokens: 512
+    prompt: "Please give your judegement towards this news in term of political factors."
+    input_nodes: []
+    output_nodes:
+      - node3
+  node1:
+    model: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+    max_tokens: 512
+    prompt: "Please give your judegement towards this news in term of economic factors."
+    input_nodes: []
+    output_nodes:
+      - node3
+  node2:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    max_tokens: 512
+    prompt: "Please give your judegement towards this news in term of social factors."
+    input_nodes: []
+    output_nodes:
+      - node3
+  node3:
+    model: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+    max_tokens: 512
+    prompt: "Please give your final judgement towards this news considering the three factors above."
+    input_nodes:
+      - node0
+      - node1
+      - node2
+    output_nodes: []

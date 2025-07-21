@@ -1,0 +1,45 @@
+start_nodes:
+  - node0
+  - node1
+  - node2
+end_nodes:
+  - node3
+nodes:
+  node0:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please answer the question in elementary level."
+    max_tokens: 1024
+    max_bs: 32
+    temperature: 0.7
+    input_nodes: []
+    output_nodes:
+      - node3
+  node1:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please answer the question in middle level."
+    max_tokens: 1024
+    max_bs: 32
+    temperature: 0.7
+    input_nodes: []
+    output_nodes:
+      - node3
+  node2:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please answer the question in high level."
+    max_tokens: 1024
+    max_bs: 32
+    temperature: 0.7
+    input_nodes: []
+    output_nodes:
+      - node3
+  node3:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please summarize the answers from all levels."
+    max_tokens: 1024
+    max_bs: 32
+    temperature: 0.7
+    input_nodes:
+      - node0
+      - node1
+      - node2
+    output_nodes: []

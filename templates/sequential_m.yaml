@@ -1,0 +1,39 @@
+start_nodes:
+  - node0
+end_nodes:
+  - node3
+nodes:
+  node0:
+    model: Qwen/Qwen3-0.6B
+    prompt: "Please answer the question in brief sentences."
+    max_tokens: 1024
+    max_bs: 16
+    input_nodes: []
+    output_nodes:
+      - node1
+  node1:
+    model: Qwen/Qwen3-0.6B
+    prompt: "Please rethink and answer the question again."
+    max_tokens: 1024
+    max_bs: 16
+    input_nodes:
+      - node0
+    output_nodes:
+      - node2
+  node2:
+    model: Qwen/Qwen3-0.6B
+    prompt: "Please give your final answer considering the critique before."
+    max_tokens: 1024
+    max_bs: 16
+    input_nodes:
+      - node1
+    output_nodes: 
+      - node3
+  node3:
+    model: meta-llama/Llama-3.1-8B-Instruct
+    prompt: "Please give your final answer considering the critique before."
+    max_tokens: 1024
+    max_bs: 16
+    input_nodes:
+      - node2
+    output_nodes: []
