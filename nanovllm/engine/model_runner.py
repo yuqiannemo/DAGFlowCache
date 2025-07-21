@@ -32,16 +32,36 @@ class ModelRunner:
                 return s.getsockname()[1]
 
         port = find_free_port() if rank == 0 else 2333
-        dist.init_process_group(
-            "nccl",
-            f"tcp://localhost:{port}",
-            world_size=self.world_size,
-            rank=rank
-        )
+        
+        # Always initialize process group (required for distributed operations)
+        if not dist.is_initialized():
+            dist.init_process_group(
+                "nccl",
+                f"tcp://localhost:{port}",
+                world_size=self.world_size,
+                rank=rank
+            )
         torch.cuda.set_device(rank)
         default_dtype = torch.get_default_dtype()
-        torch.set_default_dtype(hf_config.torch_dtype)
+        
+        # Handle torch_dtype safely
+        try:
+            model_dtype = hf_config.torch_dtype
+            if model_dtype in [torch.float16, torch.float32, torch.bfloat16]:
+                torch.set_default_dtype(model_dtype)
+            else:
+                print(f"WARNING: Invalid torch_dtype {model_dtype}, using float32")
+                torch.set_default_dtype(torch.float32)
+        except AttributeError:
+            print("WARNING: No torch_dtype in config, using float32")
+            torch.set_default_dtype(torch.float32)
+            
         torch.set_default_device("cuda")
+        
+        # Ensure head_dim is available in hf_config
+        if not hasattr(hf_config, 'head_dim') or hf_config.head_dim is None:
+            hf_config.head_dim = hf_config.hidden_size // hf_config.num_attention_heads
+            
         model_type = config.hf_config.model_type
         if model_type in ["qwen3"]:
             self.model = Qwen3ForCausalLM(hf_config)
